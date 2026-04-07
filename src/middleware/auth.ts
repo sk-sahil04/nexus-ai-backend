@@ -24,7 +24,7 @@ export const authenticate = async (
     const token = authHeader.split(' ')[1]
 
     try {
-      const decoded = AuthService.verifyAccessToken(token)
+      const decoded = AuthService.verifyToken(token)
       
       req.user = {
         id: decoded.userId,
@@ -57,7 +57,7 @@ export const optionalAuth = async (
     const token = authHeader.split(' ')[1]
 
     try {
-      const decoded = AuthService.verifyAccessToken(token)
+      const decoded = AuthService.verifyToken(token)
       
       req.user = {
         id: decoded.userId,
