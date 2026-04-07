@@ -1,7 +1,5 @@
 import { Request, Response, NextFunction } from 'express'
-import jwt from 'jsonwebtoken'
-import { getJWTConfig } from '../config'
-import { User } from '../models'
+import { AuthService } from '../services'
 
 export interface AuthRequest extends Request {
   user?: {
@@ -17,7 +15,6 @@ export const authenticate = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization
-    const jwtConfig = getJWTConfig()
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       res.status(401).json({ error: 'No token provided' })
@@ -26,29 +23,20 @@ export const authenticate = async (
 
     const token = authHeader.split(' ')[1]
 
-    const decoded = jwt.verify(token, jwtConfig.SECRET) as {
-      userId: string
-      email: string
-    }
-
-    const user = await User.findById(decoded.userId).select('_id email')
-
-    if (!user) {
-      res.status(401).json({ error: 'User not found' })
+    try {
+      const decoded = AuthService.verifyAccessToken(token)
+      
+      req.user = {
+        id: decoded.userId,
+        email: decoded.email,
+      }
+      
+      next()
+    } catch {
+      res.status(401).json({ error: 'Invalid or expired token' })
       return
     }
-
-    req.user = {
-      id: user._id.toString(),
-      email: user.email,
-    }
-
-    next()
   } catch (error) {
-    if (error instanceof jwt.JsonWebTokenError) {
-      res.status(401).json({ error: 'Invalid token' })
-      return
-    }
     res.status(500).json({ error: 'Authentication failed' })
   }
 }
@@ -60,7 +48,6 @@ export const optionalAuth = async (
 ): Promise<void> => {
   try {
     const authHeader = req.headers.authorization
-    const jwtConfig = getJWTConfig()
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
       next()
@@ -69,18 +56,15 @@ export const optionalAuth = async (
 
     const token = authHeader.split(' ')[1]
 
-    const decoded = jwt.verify(token, jwtConfig.SECRET) as {
-      userId: string
-      email: string
-    }
-
-    const user = await User.findById(decoded.userId).select('_id email')
-
-    if (user) {
+    try {
+      const decoded = AuthService.verifyAccessToken(token)
+      
       req.user = {
-        id: user._id.toString(),
-        email: user.email,
+        id: decoded.userId,
+        email: decoded.email,
       }
+    } catch {
+      // Token invalid, continue without user
     }
 
     next()
