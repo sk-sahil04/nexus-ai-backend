@@ -11,7 +11,7 @@ interface TokenPayload {
 
 export class AuthService {
   static async hashPassword(password: string): Promise<string> {
-    return bcrypt.hash(password, 12)
+    return bcrypt.hash(password, 10)
   }
 
   static async comparePassword(password: string, hash: string): Promise<boolean> {
@@ -67,7 +67,7 @@ export class AuthService {
   }
 
   static async login(email: string, password: string) {
-    const user = await User.findOne({ email: email.toLowerCase() })
+    const user = await User.findOne({ email: email.toLowerCase() }).select('+password')
 
     if (!user) {
       throw new Error('Invalid credentials')
