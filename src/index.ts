@@ -48,17 +48,8 @@ async function startServer() {
     await connectDB()
 
     app.listen(PORT, () => {
-      console.log(`
-╔═══════════════════════════════════════════════════╗
-║                                                   ║
-║   🚀 Nexus AI Backend Server                     ║
-║                                                   ║
-║   Server:  http://localhost:${PORT}                         ║
-║   Mode:    ${NODE_ENV.padEnd(40)}║
-║   AI:      ${AI_MODE.padEnd(40)}║
-║                                                   ║
-╚═══════════════════════════════════════════════════╝
-      `)
+      const baseUrl = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`
+      console.log(`🚀 Server running on: ${baseUrl}`)
     })
   } catch (error) {
     console.error('Failed to start server:', error)
